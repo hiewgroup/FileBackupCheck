@@ -1,6 +1,5 @@
 """Utilities for calculating SHA256 hashes across platforms."""
 
-
 from tkinter import filedialog, messagebox
 import os
 import platform
@@ -10,7 +9,6 @@ import subprocess
 
 
 _seven_zip_exe = None
-
 _windows_method = None
 
 
@@ -26,7 +24,6 @@ def _choose_windows_method():
     )
     _windows_method = "7zip" if use_7z else "certutil"
     return _windows_method
-
 
 
 def _get_seven_zip_exe():
@@ -49,7 +46,6 @@ def _calculate_with_7z(filepath):
     if not exe:
         print("7z.exe not provided. Cannot compute SHA256.")
         return None
-
 
     try:
         result = subprocess.run(
@@ -76,49 +72,24 @@ def _calculate_with_7z(filepath):
 
 
 def _calculate_with_certutil(filepath):
+    """Compute SHA256 using Windows certutil."""
     try:
         result = subprocess.run(
-            [exe, "h", "-scrcSHA256", filepath],
+            ["certutil", "-hashfile", filepath, "SHA256"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
         )
-        if result.returncode == 0:
-            lines = result.stdout.strip().split("\n")
-            if len(lines) >= 2:
-                return lines[1].strip().replace(" ", "").lower()
-            print(f"Unexpected output format when hashing {filepath}")
-            return None
-
-        print(f"Error hashing {filepath}: {result.stderr.strip()}")
-        return None
-    except Exception as exc:  # pragma: no cover - process execution
-        print(f"Exception hashing {filepath}: {exc}")
-        return None
-
-
-def _calculate_with_sha256sum(filepath):
-    try:
-        result = subprocess.run(
-            ["sha256sum", filepath],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-        if result.returncode == 0:
-            return result.stdout.split()[0]
-
-        print(f"Error hashing {filepath}: {result.stderr.strip()}")
         if result.returncode != 0:
             print(f"Error hashing {filepath}: {result.stderr.strip()}")
             return None
 
         for line in result.stdout.splitlines():
-            line = line.strip()
-            if len(line) == 64 and all(c in "0123456789abcdefABCDEF" for c in line):
-                return line.lower()
+            cleaned = line.strip().replace(" ", "")
+            if re.fullmatch(r"[0-9a-fA-F]{64}", cleaned):
+                return cleaned.lower()
 
-        print(f"Warning: SHA256 not found for {filepath}")
+        print(f"Unexpected output format when hashing {filepath}")
         return None
     except Exception as exc:  # pragma: no cover - process execution
         print(f"Exception hashing {filepath}: {exc}")
@@ -141,6 +112,8 @@ def _calculate_with_sha256sum(filepath):
     except Exception as exc:  # pragma: no cover - process execution
         print(f"Exception hashing {filepath}: {exc}")
         return None
+
+
 def _calculate_with_shasum(filepath):
     try:
         result = subprocess.run(
@@ -168,7 +141,6 @@ def calculate_sha256(filepath):
         if method == "7zip":
             return _calculate_with_7z(filepath)
         return _calculate_with_certutil(filepath)
-        return _calculate_with_7z(filepath)
 
     # Prefer sha256sum on Unix-like systems
     if shutil.which("sha256sum"):
@@ -180,4 +152,3 @@ def calculate_sha256(filepath):
 
     print("No suitable SHA256 calculation method found.")
     return None
-
