@@ -10,9 +10,10 @@ what to do with the files from the cleanup folder. You can then delete duplicate
 or move new/mismatched files into the preserve folder.
 
 > **Note**
-> The hashing is performed using the Windows `certutil` command, so the tool is
-> primarily intended for Windows systems. Ensure `certutil` is available in your
-> `PATH`.
+> The program can use several hashing utilities depending on your platform.
+> On Windows you can choose between `7z.exe` or the built‑in `certutil`.
+> On Linux or macOS it will automatically use `sha256sum` or `shasum` when
+> available.
 
 ## Features
 
@@ -26,14 +27,17 @@ or move new/mismatched files into the preserve folder.
 - Displays a sortable table showing each file, its SHA256 hash and the planned
   action.
 - Provides progress feedback during hashing and file operations.
+- Allows saving the comparison results to a CSV file and reloading them later.
 
 ## Getting Started
 
 ### Requirements
 
-- Python 3 with `tkinter` installed (included with the standard Windows Python
-  installers).
-- `certutil` accessible from the command line (bundled with Windows).
+- Python 3 with `tkinter` installed.
+- On Windows either `certutil` must be in your `PATH` or you need `7z.exe`
+  available (the program will prompt for its location).
+- On Linux or macOS, `sha256sum` or `shasum` should be present (usually
+  installed by default).
 
 ### Running the Application
 
@@ -58,6 +62,8 @@ or move new/mismatched files into the preserve folder.
    - `Move Mismatched` moves files that share a path but differ in content. The
      moved file is renamed with a `'` before the extension.
    - `Move New` moves files that exist only in the cleanup folder.
+5. **Save/Load** – Use `Save CSV` to export the current table for review in
+   another tool (e.g., Excel) or `Load CSV` to restore a previously saved list.
 
 Each operation updates the table so you can review the results or run additional
 passes if needed.
