@@ -1,6 +1,6 @@
 """Utilities for calculating SHA256 hashes across platforms."""
 
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import os
 import platform
 import shutil
@@ -8,6 +8,21 @@ import subprocess
 
 
 _seven_zip_exe = None
+_windows_method = None
+
+
+def _choose_windows_method():
+    """Ask the user which hashing method to use on Windows."""
+    global _windows_method
+    if _windows_method:
+        return _windows_method
+
+    use_7z = messagebox.askyesno(
+        "Hashing Method",
+        "Use 7-Zip for hashing?\nSelect No to use certutil instead.",
+    )
+    _windows_method = "7zip" if use_7z else "certutil"
+    return _windows_method
 
 
 def _get_seven_zip_exe():
@@ -48,6 +63,28 @@ def _calculate_with_7z(filepath):
                 return line.lower()
 
         print(f"Warning: SHA256 not found for {filepath}")
+        return None
+    except Exception as exc:  # pragma: no cover - process execution
+        print(f"Exception hashing {filepath}: {exc}")
+        return None
+
+
+def _calculate_with_certutil(filepath):
+    try:
+        result = subprocess.run(
+            ["certutil", "-hashfile", filepath, "SHA256"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        if result.returncode == 0:
+            lines = result.stdout.strip().split("\n")
+            if len(lines) >= 2:
+                return lines[1].strip().replace(" ", "").lower()
+            print(f"Unexpected output format when hashing {filepath}")
+            return None
+
+        print(f"Error hashing {filepath}: {result.stderr.strip()}")
         return None
     except Exception as exc:  # pragma: no cover - process execution
         print(f"Exception hashing {filepath}: {exc}")
@@ -95,7 +132,10 @@ def calculate_sha256(filepath):
     system = platform.system()
 
     if system == "Windows":
-        return _calculate_with_7z(filepath)
+        method = _choose_windows_method()
+        if method == "7zip":
+            return _calculate_with_7z(filepath)
+        return _calculate_with_certutil(filepath)
 
     # Prefer sha256sum on Unix-like systems
     if shutil.which("sha256sum"):
