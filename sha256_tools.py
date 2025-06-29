@@ -152,4 +152,3 @@ def calculate_sha256(filepath):
 
     print("No suitable SHA256 calculation method found.")
     return None
-
