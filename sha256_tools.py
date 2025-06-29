@@ -20,7 +20,7 @@ def _choose_windows_method():
 
     use_7z = messagebox.askyesno(
         "Hashing Method",
-        "Use 7-Zip for hashing?\nSelect No to use certutil instead.",
+        "Use 7-Zip for hashing(Faster)?\nSelect No to use certutil instead.",
     )
     _windows_method = "7zip" if use_7z else "certutil"
     return _windows_method
