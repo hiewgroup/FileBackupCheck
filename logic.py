@@ -1,5 +1,6 @@
 import os
 import shutil
+import csv
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
@@ -274,3 +275,61 @@ def sort_by_column(column):
             tree.heading(col, text=f"{col} {direction}")
         else:
             tree.heading(col, text=col)
+
+
+def save_csv():
+    """Save the current tree contents to a CSV file."""
+    if not tree.get_children():
+        messagebox.showwarning("No Data", "There is no data to save.")
+        return
+
+    file_path = filedialog.asksaveasfilename(
+        title="Save CSV",
+        defaultextension=".csv",
+        filetypes=[("CSV Files", "*.csv")],
+    )
+    if not file_path:
+        return
+
+    try:
+        with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["Path", "SHA256", "Action"])
+            for item in tree.get_children():
+                writer.writerow(tree.item(item)["values"])
+        messagebox.showinfo("Save Completed", f"Data saved to {file_path}")
+    except Exception as exc:
+        messagebox.showerror("Error", f"Failed to save CSV: {exc}")
+
+
+def load_csv():
+    """Load tree contents from a CSV file."""
+    file_path = filedialog.askopenfilename(
+        title="Load CSV",
+        filetypes=[("CSV Files", "*.csv")],
+    )
+    if not file_path:
+        return
+
+    try:
+        for item in tree.get_children():
+            tree.delete(item)
+        delete_plan.clear()
+        move_mismatch_plan.clear()
+        move_new_plan.clear()
+        file_hashes.clear()
+
+        with open(file_path, newline="", encoding="utf-8") as csvfile:
+            reader = csv.reader(csvfile)
+            header = next(reader, None)
+            for row in reader:
+                if len(row) >= 3:
+                    tree.insert("", "end", values=(row[0], row[1], row[2]))
+        delete_button.config(state=tk.DISABLED)
+        move_mismatch_button.config(state=tk.DISABLED)
+        move_new_button.config(state=tk.DISABLED)
+        progress_var.set(0)
+        progress_label.config(text="")
+        messagebox.showinfo("Load Completed", f"Data loaded from {file_path}")
+    except Exception as exc:
+        messagebox.showerror("Error", f"Failed to load CSV: {exc}")

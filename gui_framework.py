@@ -53,6 +53,12 @@ def create_gui():
     logic.move_new_button = ttk.Button(button_frame, text="Move New", command=logic.execute_move_new, state=tk.DISABLED)
     logic.move_new_button.pack(side=tk.LEFT, padx=5)
 
+    save_button = ttk.Button(button_frame, text="Save CSV", command=logic.save_csv)
+    save_button.pack(side=tk.LEFT, padx=5)
+
+    load_button = ttk.Button(button_frame, text="Load CSV", command=logic.load_csv)
+    load_button.pack(side=tk.LEFT, padx=5)
+
     progress_frame = ttk.Frame(main_frame)
     progress_frame.pack(fill=tk.X, pady=5)
 
